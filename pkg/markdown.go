@@ -5,15 +5,16 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
-	"github.com/Masterminds/sprig/v3"
-	"github.com/dstotijn/go-notion"
-	"github.com/mitchellh/mapstructure"
-	"gopkg.in/yaml.v3"
 	"io"
 	"log"
 	"reflect"
 	"strings"
 	"text/template"
+
+	"github.com/Masterminds/sprig/v3"
+	"github.com/dstotijn/go-notion"
+	"github.com/mitchellh/mapstructure"
+	"gopkg.in/yaml.v3"
 )
 
 //go:embed templates
@@ -316,19 +317,7 @@ func (tm *ToMarkdown) GenBlock(bType string, block MdBlock, addMoreTag bool, ski
 }
 
 func (tm *ToMarkdown) downloadFrontMatterImage(url string) string {
-
-	image := &notion.FileBlock{
-		Type: "external",
-		File: nil,
-		External: &notion.FileExternal{
-			URL: url,
-		},
-	}
-	if err := tm.Files.DownloadMedia(image); err != nil {
-		return ""
-	}
-
-	return image.External.URL
+	return url
 }
 
 func ConvertTable(rows []notion.Block) string {

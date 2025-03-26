@@ -2,15 +2,15 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/dstotijn/go-notion"
 	"io"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/dstotijn/go-notion"
 )
 
 // all user wr | group wr | other user wr
@@ -117,20 +117,7 @@ func (ns *NotionSite) SetFileInfo(position string) {
 func (files *Files) DownloadMedia(dynamicMedia any) error {
 
 	download := func(imgURL string) (string, error) {
-		var savePath string
-		savePath = files.MediaPath
-		resp, err := http.Get(imgURL)
-		if err != nil {
-			return "", err
-		}
-
-		imgFilename, err := files.saveTo(resp.Body, imgURL, savePath)
-		if err != nil {
-			return "", err
-		}
-		var convertWinPath = strings.ReplaceAll(filepath.Join(files.DefaultMediaFolderName, imgFilename), "\\", "/")
-
-		return convertWinPath, nil
+		return imgURL, nil
 	}
 
 	var err error

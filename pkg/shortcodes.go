@@ -2,11 +2,12 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/dstotijn/go-notion"
-	"github.com/otiai10/opengraph"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/dstotijn/go-notion"
+	"github.com/otiai10/opengraph"
 )
 
 // injectBookmarkInfo set bookmark info into the extra map field
@@ -194,6 +195,7 @@ func (tm *ToMarkdown) injectFrontMatterCover(cover *notion.Cover) {
 	if cover == nil {
 		return
 	}
+
 	image := &notion.FileBlock{
 		Type:     cover.Type,
 		File:     cover.File,
@@ -203,12 +205,23 @@ func (tm *ToMarkdown) injectFrontMatterCover(cover *notion.Cover) {
 	if err := tm.Files.DownloadMedia(image); err != nil {
 		return
 	}
-	if image.Type == notion.FileTypeExternal {
-		tm.FrontMatter["image"] = image.External.URL
+
+	var imageURL string
+	switch image.Type {
+	case notion.FileTypeExternal:
+		imageURL = image.External.URL
+	case notion.FileTypeFile:
+		imageURL = image.File.URL
+	default:
+		return
 	}
-	if image.Type == notion.FileTypeFile {
-		tm.FrontMatter["image"] = image.File.URL
+
+	if strings.Contains(imageURL, "solid_beige.png") {
+		tm.FrontMatter["image"] = ""
+		return
 	}
+
+	tm.FrontMatter["image"] = imageURL
 }
 
 func (tm *ToMarkdown) todo(video any, extra *map[string]any) error {
