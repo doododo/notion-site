@@ -75,8 +75,8 @@ type FrontMatter struct {
 	Status          string   `json:"status"          yaml:"status,flow"`
 	Author          string   `json:"author"          yaml:"author,flow"`
 	Weight          int64    `json:"weight"          yaml:"weight,flow"`
-	LastMod         string   `json:"lastMod"         yaml:"lastMod,flow"`
-	CreateAt        string   `json:"createAt"        yaml:"createAt,flow"`
+	CreateAt        string   `json:"date"        yaml:"date,flow"`
+	LastMod         string   `json:"lastmod"         yaml:"lastmod,flow"`
 	ExpiryDate      string   `json:"expiryDate"      yaml:"expiryDate,flow"`
 	Draft           bool     `json:"draft"           yaml:"draft,flow"`
 	IsTranslated    bool     `json:"isTranslated"    yaml:"isTranslated,flow"`
