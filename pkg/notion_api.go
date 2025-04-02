@@ -2,13 +2,14 @@ package pkg
 
 import (
 	"context"
-	"github.com/briandowns/spinner"
-	"github.com/davecgh/go-spew/spew"
-	"github.com/dstotijn/go-notion"
 	"log"
 	"os"
 	"reflect"
 	"time"
+
+	"github.com/briandowns/spinner"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/dstotijn/go-notion"
 )
 
 var spin = spinner.New(spinner.CharSets[14], time.Millisecond*100)
@@ -42,6 +43,33 @@ func (api *NotionAPI) filterFromConfig(config Notion) *notion.DatabaseQueryFilte
 		Or: properties,
 	}
 }
+func (api *NotionAPI) filterCombined(config Notion) *notion.DatabaseQueryFilter {
+	// 创建时间过滤器 48小时内更新的文章
+	fortyEightHoursAgo := time.Now().Add(-48 * time.Hour)
+	timeFilter := notion.DatabaseQueryFilter{
+		Property: "Lastmod",
+		DatabaseQueryPropertyFilter: notion.DatabaseQueryPropertyFilter{
+			Date: &notion.DatePropertyFilter{
+				After: &fortyEightHoursAgo,
+			},
+		},
+	}
+
+	// 创建状态过滤器
+	statusFilter := api.filterFromConfig(config)
+
+	// 组合过滤器
+	if statusFilter != nil {
+		return &notion.DatabaseQueryFilter{
+			And: []notion.DatabaseQueryFilter{
+				timeFilter,
+				*statusFilter,
+			},
+		}
+	}
+
+	return &timeFilter
+}
 
 func (api *NotionAPI) FindBlockChildrenCommentLoop(client *notion.Client, blockArr []notion.Block, cursor string) (blocks []notion.Comment, err error) {
 	for i := 0; i < len(blockArr); i++ {
@@ -71,7 +99,7 @@ func (api *NotionAPI) queryDatabase(client *notion.Client, config Notion, id str
 	spin.Start()
 	defer spin.Stop()
 	query := &notion.DatabaseQuery{
-		Filter:   api.filterFromConfig(config),
+		Filter:   api.filterCombined(config),
 		PageSize: 100,
 	}
 	return client.QueryDatabase(context.Background(), id, query)
