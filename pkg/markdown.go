@@ -303,7 +303,7 @@ func (tm *ToMarkdown) GenBlock(bType string, block MdBlock, addMoreTag bool, ski
 
 	if !skip {
 		if addMoreTag {
-			tm.ContentBuffer.WriteString("<!--more-->")
+			// tm.ContentBuffer.WriteString("<!--more-->")
 		}
 
 		if block.HasChildren() {
