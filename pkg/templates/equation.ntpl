@@ -1,0 +1,6 @@
+{{ $eq := asEquation .Block }}
+{{ if $eq }}
+$$
+{{ $eq.Expression }}
+$$
+{{ end }}

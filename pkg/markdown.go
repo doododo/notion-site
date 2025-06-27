@@ -290,6 +290,12 @@ func (tm *ToMarkdown) GenBlock(bType string, block MdBlock, addMoreTag bool, ski
 		s, _ := json.Marshal(p)
 		return string(s)
 	}
+	funcs["asEquation"] = func(i any) *notion.EquationBlock {
+		if eq, ok := i.(*notion.EquationBlock); ok {
+			return eq
+		}
+		return nil
+	}
 
 	t := template.New(fmt.Sprintf("%s.ntpl", bType)).Funcs(funcs)
 	tpl, err := t.ParseFS(mdTemplatesFS, fmt.Sprintf("templates/%s.*", bType))
@@ -383,6 +389,10 @@ func ConvertRich(t notion.RichText) string {
 		}
 		return fmt.Sprintf(emphFormat(t.Annotations), strings.TrimSpace(t.Text.Content))
 	case notion.RichTextTypeEquation:
+		if strings.TrimSpace(t.Equation.Expression) == "" {
+			return ""
+		}
+		return fmt.Sprintf("$%s$", t.Equation.Expression)
 	case notion.RichTextTypeMention:
 		return fmt.Sprintf("[%s](%s)", t.PlainText, *t.HRef)
 	}
