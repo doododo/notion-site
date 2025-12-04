@@ -26,6 +26,12 @@ generate: ## generate the static assets
 build: mod ## Build the binary file
 	go build -v -o build/bin/$(PROJECT) $(MAINFILE)
 
+build-linux: mod
+	GOOS=linux GOARCH=amd64 go build -v -o build/bin/$(PROJECT) $(MAINFILE)
+
+push:
+	scp -r ./build/bin/$(PROJECT) 39.102.215.28:/home/ecs-user/docker/dnmp/www/myblog
+
 clean: ## Remove previous build
 	@rm -rf ./build
 

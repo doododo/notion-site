@@ -10,3 +10,4 @@ web/
 .coverprofile
 config.yaml
 content/
+public

@@ -1,5 +1,5 @@
 notion:
-  databaseId: df7fb0e4e0114268b973f9d3e9a39982
+  databaseId: 1c0de639582780b0ac2df0e982e30913
   filterProp: Status
   filterValue:
     - Finished
@@ -9,4 +9,29 @@ notion:
 markdown:
   homePath: ./
 
-  
+# 动态属性配置 - 无需修改代码即可添加新的 Notion 属性
+dynamicProps:
+  - name: "Json"
+    type: "richtext"
+    outputType: "string"
+    defaultValue: ""
+  - name: "MetaTitle"
+    type: "richtext"
+    outputType: "string"
+    defaultValue: ""
+  - name: "MetaDescription"
+    type: "richtext"
+    outputType: "string"
+    defaultValue: ""
+  - name: "Priority"
+    type: "number"
+    outputType: "int"
+    defaultValue: 0
+  - name: "IsPublic"
+    type: "checkbox"
+    outputType: "bool"
+    defaultValue: false
+  - name: "ExternalLinks"
+    type: "multiselect"
+    outputType: "[]string"
+    defaultValue: []

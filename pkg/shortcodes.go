@@ -10,6 +10,22 @@ import (
 	"github.com/otiai10/opengraph"
 )
 
+// escapeQuotes 转义字符串中的双引号，用于 shortcode 参数
+func escapeQuotes(s string) string {
+	// 转义双引号和反斜杠
+	s = strings.ReplaceAll(s, "\\", "\\\\")
+	s = strings.ReplaceAll(s, "\"", "\\\"")
+	// 移除或替换可能导致问题的特殊字符
+	s = strings.ReplaceAll(s, "\n", " ")
+	s = strings.ReplaceAll(s, "\r", " ")
+	s = strings.ReplaceAll(s, "\t", " ")
+	// 清理多余的空格
+	for strings.Contains(s, "  ") {
+		s = strings.ReplaceAll(s, "  ", " ")
+	}
+	return strings.TrimSpace(s)
+}
+
 // injectBookmarkInfo set bookmark info into the extra map field
 func (tm *ToMarkdown) injectBookmarkInfo(bookmark *notion.BookmarkBlock, extra *map[string]any) error {
 	og, err := opengraph.Fetch(bookmark.URL)
@@ -24,8 +40,8 @@ func (tm *ToMarkdown) injectBookmarkInfo(bookmark *notion.BookmarkBlock, extra *
 		}
 	}
 	(*extra)["Url"] = og.URL
-	(*extra)["Title"] = og.Title
-	(*extra)["Description"] = og.Description
+	(*extra)["Title"] = escapeQuotes(og.Title)
+	(*extra)["Description"] = escapeQuotes(og.Description)
 	(*extra)["Icon"] = og.Favicon
 	return nil
 }
@@ -56,9 +72,11 @@ func (tm *ToMarkdown) injectEmbedInfo(embed *notion.EmbedBlock, extra *map[strin
 			url = FindUrlContext(RegexJsfiddle, url)
 			plat = "Jsfiddle"
 		}
-		if strings.Contains(url, Twitter) {
+		if strings.Contains(url, Twitter) || strings.Contains(url, X) {
+			// support both twitter.com and x.com URL formats
 			user := FindUrlContext(RegexTwitterUser, url)
-			url = FindUrlContext(RegexTwitterId, url)
+			id := FindUrlContext(RegexTwitterId, url)
+			url = id
 			plat = "twitter"
 			(*extra)["User"] = user
 		}
@@ -116,7 +134,7 @@ func (tm *ToMarkdown) injectCalloutInfo(callout *notion.CalloutBlock, extra *map
 		text += richText.Text.Content
 	}
 	(*extra)["Emoji"] = callout.Icon.Emoji
-	(*extra)["Text"] = text
+	(*extra)["Text"] = escapeQuotes(text)
 	return nil
 }
 
@@ -183,7 +201,38 @@ func (tm *ToMarkdown) injectFrontMatter(key string, property notion.DatabasePage
 	if fmv == nil {
 		return
 	}
-	// todo support settings mapping relation
+	// Special handling: map Notion properties named `url` and `aliases` to Hugo front matter types
+	lowerKey := strings.ToLower(key)
+	switch lowerKey {
+	case "url":
+		// ensure a plain string
+		switch v := fmv.(type) {
+		case string:
+			tm.FrontMatter[key] = v
+		default:
+			// try to stringify
+			tm.FrontMatter[key] = fmt.Sprintf("%v", v)
+		}
+		return
+	case "aliases":
+		// ensure []string
+		switch v := fmv.(type) {
+		case []string:
+			tm.FrontMatter[key] = v
+		case string:
+			tm.FrontMatter[key] = []string{v}
+		case []any:
+			// convert []any to []string
+			out := make([]string, 0, len(v))
+			for _, item := range v {
+				out = append(out, fmt.Sprintf("%v", item))
+			}
+			tm.FrontMatter[key] = out
+		default:
+			tm.FrontMatter[key] = []string{fmt.Sprintf("%v", v)}
+		}
+		return
+	}
 	tm.FrontMatter[key] = fmv
 }
 
@@ -272,4 +321,14 @@ func (tm *ToMarkdown) inject(mdb *MdBlock, blocks []notion.Block, index int) err
 		mdb.Block = block.(*notion.TableBlock)
 	}
 	return err
+}
+
+// ConvertTwitterExtraToX builds the Hugo x shortcode string from extra map
+func ConvertTwitterExtraToX(extra map[string]any) string {
+	user, _ := extra["User"].(string)
+	id, _ := extra["Url"].(string)
+	if user == "" || id == "" {
+		return ""
+	}
+	return fmt.Sprintf("{{< x user=\"%s\" id=\"%s\" >}}", user, id)
 }

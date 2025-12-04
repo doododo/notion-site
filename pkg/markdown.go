@@ -92,6 +92,9 @@ type FrontMatter struct {
 	Description     string   `json:"description"     yaml:"description,flow"`
 	MetaTitle       string   `json:"metaTitle"       yaml:"metaTitle,flow"`
 	MetaDescription string   `json:"metaDescription" yaml:"metaDescription,flow"`
+	// Support for custom URL and aliases from Notion properties
+	URL     string   `json:"url" yaml:"url,flow"`
+	Aliases []string `json:"aliases" yaml:"aliases,flow"`
 	// Calculate Chinese word count accurately. Default is true
 	//IsCJKLanguage bool   `json:"isCJKLanguage" yaml:"isCJKLanguage,flow"`
 	//PublishDate   string `json:"publishDate"   yaml:"publishDate,flow"`
@@ -187,7 +190,30 @@ func (tm *ToMarkdown) GenFrontMatter(writer io.Writer) (*FrontMatter, error) {
 	fm.IsTranslated = true
 	// chinese character statistics
 	//fm.IsCJKLanguage = true
-	frontMatters, err := yaml.Marshal(fm)
+
+	// 合并动态属性到 FrontMatter
+	dynamicFrontMatter := make(map[string]interface{})
+
+	// 首先编码现有的结构化 FrontMatter
+	fmBytes, err := yaml.Marshal(fm)
+	if err != nil {
+		return fm, err
+	}
+
+	// 将结构化数据解析到 map 中
+	if err := yaml.Unmarshal(fmBytes, &dynamicFrontMatter); err != nil {
+		return fm, err
+	}
+
+	// 添加动态属性
+	if tm.NotionProps.DynamicProps != nil {
+		for key, value := range tm.NotionProps.DynamicProps {
+			dynamicFrontMatter[key] = value
+		}
+	}
+
+	// 重新编码完整的 FrontMatter
+	frontMatters, err := yaml.Marshal(dynamicFrontMatter)
 
 	if err != nil {
 		return fm, nil
@@ -236,7 +262,7 @@ func (tm *ToMarkdown) GenContentBlocks(blocks []notion.Block, depth int) error {
 				return err
 			}
 			lastBlockType = reflect.TypeOf(block)
-			fmt.Println(fmt.Sprintf("Processing the %d th %s tpye block  -> %s ", index, reflect.TypeOf(block), block.ID()))
+			fmt.Printf(fmt.Sprintf("Processing the %d th %s tpye block  -> %s \n", index, reflect.TypeOf(block), block.ID()))
 			return nil
 		}
 
